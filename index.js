@@ -17,9 +17,9 @@ sendPush = function () {
     },
     url: 'https://exp.host/--/api/v2/push/send',
     body: {
-      "to": token,
+      "to": token.pushToken,
       "sound": "default",
-      "body": "Hello from Me"
+      "body": `Hey! Your friend late to her/his destination for ${token.howLate}.`
     },
     json: true,
     function(error, response, body){
@@ -44,10 +44,13 @@ const getUserPushTokens = async () => {
     for (let i = 0; i< uidArr.length; i++) {
       let user = await firestore
       .collection('users')
-      .doc(uidArr[i])
+      .doc(uidArr[i].uid)
       .get()
       let token = user.data().pushToken
-      pushTokensArr.push(token)
+      pushTokensArr.push({
+        pushToken: token,
+        howLate: uidArr[i].howLate
+      })
       console.log('getting token...', token)
     }
     console.log('all tokens: ', pushTokensArr)
@@ -68,10 +71,14 @@ const getLateUsers = async () => {
     .get()
     tracks.forEach(track => {
       let time = track.data().time
-      if (time.seconds*1000 < Date.now()) {
+      let howLate = Date.now() - time.seconds*1000
+      if (howLate > 0) {
         let trackers = track.data().tracker
         trackers.forEach(tracker => {
-          homeLate.push(tracker)
+          homeLate.push({
+            uid: tracker,
+            howLate: `about ${Math.floor((howLate/1000/60) << 0)} min`
+          })
           console.log('adding new traker')
         })
       }
@@ -84,3 +91,7 @@ const getLateUsers = async () => {
 }
 
 sendPush()
+
+// getUserPushTokens()
+
+// getLateUsers()
