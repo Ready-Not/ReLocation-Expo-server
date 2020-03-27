@@ -1,0 +1,15 @@
+{
+  "name": "firerelocation",
+  "version": "1.0.0",
+  "description": "server side for ReLocation-expo",
+  "main": "index.js",
+  "scripts": {
+    "test": "run test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^7.13.0",
+    "request": "^2.88.2"
+  }
+}
