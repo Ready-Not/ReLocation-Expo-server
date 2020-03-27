@@ -1,10 +1,10 @@
 const {firestore} = require('./config');
 
 //send push notification to tokens
-//set timer (run function) every xx mins
-
+//set timer to run function every xx min
 sendPush = function () {
   const req = require('request');
+  const timeout = 50000;
   getUserPushTokens()
   .then (tokens => {
   tokens.map(token => {
@@ -23,23 +23,22 @@ sendPush = function () {
     },
     json: true,
     function(error, response, body){
-      console.log(body);
       // resp.send(body)
     }
   })
-  console.log('Push sent')
+  console.log(`"Late notification" sent to traker: ${token.pushToken} - late for ${token.howLate}`)
 })
+console.log(`Next batch will be sent in ${timeout/1000} sec`)
 })
-  setTimeout(sendPush, 50000);
+setTimeout(sendPush, timeout);
 }
 
 
 
-//get tracker's push tokens
+//2. get trackers' push notifications tokens
 const getUserPushTokens = async () => {
   try {
     let uidArr = await getLateUsers();
-    console.log('got uids array: ', uidArr)
     let pushTokensArr = []
     for (let i = 0; i< uidArr.length; i++) {
       let user = await firestore
@@ -51,9 +50,8 @@ const getUserPushTokens = async () => {
         pushToken: token,
         howLate: uidArr[i].howLate
       })
-      console.log('getting token...', token)
     }
-    console.log('all tokens: ', pushTokensArr)
+    console.log('got all late tokens: ', pushTokensArr)
     return pushTokensArr
   } catch (e) {
     console.error(e)
@@ -61,17 +59,20 @@ const getUserPushTokens = async () => {
 }
 
 
-//get array of tokens where to send late notifications
+//1. Get all tracks we need to send notifications about
 const getLateUsers = async () => {
   try {
     let homeLate = []
+    //get all tracks with status "open"
     let tracks = await firestore
     .collection('tracks')
     .where('status', '==', 'open')
     .get()
     tracks.forEach(track => {
+      //check if current time more then ETA
       let time = track.data().time
       let howLate = Date.now() - time.seconds*1000
+      //add tracker's uid and late time for all open tracks to the array
       if (howLate > 0) {
         let trackers = track.data().tracker
         trackers.forEach(tracker => {
@@ -79,11 +80,10 @@ const getLateUsers = async () => {
             uid: tracker,
             howLate: `about ${Math.floor((howLate/1000/60) << 0)} min`
           })
-          console.log('adding new traker')
         })
       }
     })
-    console.log('all late: ', homeLate)
+    console.log('got all trackers for all late open tracks: ', homeLate)
     return homeLate;
   } catch (e) {
     console.error(e)
