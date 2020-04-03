@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "firebase": "^7.13.0",
+    "geo-distance": "^0.2.0",
     "request": "^2.88.2"
   }
 }
